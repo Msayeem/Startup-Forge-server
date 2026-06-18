@@ -34,6 +34,7 @@ async function run() {
 const database=client.db("startup-forge");
 const userCollection=database.collection("user");
 const startupsCollection=database.collection("startups");
+const opportunitiesCollection=database.collection("opportunities");
 
 
 
@@ -46,6 +47,43 @@ app.post('/startups', async(req, res)=>{
   const result=await startupsCollection.insertOne(startup);
   res.send(result)
 })
+
+app.get('/my/startups', async(req, res)=>{
+     const query = {};
+      if (req.query.founderId) {
+        query.founderId = req.query.founderId
+      }
+      const result = await startupsCollection.findOne(query);
+      res.send(result)
+})
+
+app.post('/opportunities', async(req, res)=>{
+  const opportunity=req.body;
+  const newOpportunity={
+    ...opportunity,
+    createdAt: new Date()
+  }
+
+  const result=await opportunitiesCollection.insertOne(newOpportunity);
+  res.send(result)
+})
+
+
+   app.get('/opportunities', async (req, res) => {
+ 
+      const query = {};
+
+      if (req.query.opportunityId) {
+        query.opportunityId = req.query.opportunityId;
+      }
+      if (req.query.status) {
+        query.status = req.query.status;
+      }
+
+      const cursor = opportunitiesCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
 
 
 
