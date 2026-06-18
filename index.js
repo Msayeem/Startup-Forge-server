@@ -33,6 +33,19 @@ async function run() {
 
 const database=client.db("startup-forge");
 const userCollection=database.collection("user");
+const startupsCollection=database.collection("startups");
+
+
+
+app.post('/startups', async(req, res)=>{
+  const startup=req.body;
+  const newStartup={
+    ...startup,
+    createdAt: new Date()
+  }
+  const result=await startupsCollection.insertOne(startup);
+  res.send(result)
+})
 
 
 
