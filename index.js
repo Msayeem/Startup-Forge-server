@@ -5,7 +5,7 @@ const port = 5000
 require('dotenv').config();
 app.use(cors());
 app.use(express.json());
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 app.get('/', (req, res) => {
   res.send('Welcome to Startup-Forge server!')
@@ -35,6 +35,7 @@ const database=client.db("startup-forge");
 const userCollection=database.collection("user");
 const startupsCollection=database.collection("startups");
 const opportunitiesCollection=database.collection("opportunities");
+const applicationsCollection=database.collection("applications");
 
 
 
@@ -94,6 +95,55 @@ app.post('/opportunities', async(req, res)=>{
         const result = await opportunitiesCollection.findOne(query);
         res.send(result)
     })
+
+
+    app.post('/applications', async(req, res)=>{
+const application = req.body;
+      const newApplication = {
+        ...application,
+        createdAt: new Date()
+      }
+      const result = await applicationsCollection.insertOne(newApplication);
+      res.send(result)
+    })
+
+
+      app.get('/applications', async (req, res) => {
+      const query = {}
+      if (req.query.userId) {
+        query.applicantId = req.query.userId;
+      }
+
+      console.log(req.user, req.query.userId)
+
+      if (req.query.opportunityId) {
+        query.opportunityId = req.query.opportunityId
+      }
+      const cursor = applicationsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result)
+    })
+
+
+
+      app.get('/applications', async (req, res) => {
+      const query = {}
+      if (req.query.userId) {
+        query.founderId = req.query.userId;
+      }
+
+      console.log(req.user, req.query.userId)
+
+      if (req.query.opportunityId) {
+        query.opportunityId = req.query.opportunityId
+      }
+      const cursor = applicationsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result)
+    })
+
+
+
 
 
 
