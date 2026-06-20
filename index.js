@@ -65,6 +65,17 @@ const result =await startupsCollection.deleteOne({_id: new ObjectId(id)});
 res.json(result);
 })
 
+
+ app.patch('/startups/:id', async (req, res) => {
+      const { id } = req.params;
+      const updateData = req.body;
+      const result = await startupsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateData }
+      );
+      res.json(result);
+    });
+
 app.post('/opportunities', async(req, res)=>{
   const opportunity=req.body;
   const newOpportunity={
