@@ -105,6 +105,17 @@ app.post('/opportunities', async(req, res)=>{
     });
 
 
+     app.patch('/opportunities/:id', async (req, res) => {
+      const { id } = req.params;
+      const updateData = req.body;
+      const result = await opportunitiesCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateData }
+      );
+      res.json(result);
+    });
+
+
     app.get('/opportunities/:id', async(req, res)=>{
           const id = req.params.id;
         const query = {
