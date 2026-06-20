@@ -115,6 +115,13 @@ app.post('/opportunities', async(req, res)=>{
     })
 
 
+    app.delete('/opportunities/:id', async(req, res)=>{
+  const {id}=req.params;
+const result =await opportunitiesCollection.deleteOne({_id: new ObjectId(id)});
+res.json(result);
+})
+
+
     app.post('/applications', async(req, res)=>{
 const application = req.body;
       const newApplication = {
