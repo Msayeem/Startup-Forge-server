@@ -41,6 +41,13 @@ const subscriptionCollection=database.collection("subscriptions");
 
 
 
+
+   app.get('/users', async(req, res)=>{
+      const result=await userCollection.find().toArray();
+      res.json(result);
+    });
+
+
 app.post('/startups', async(req, res)=>{
   const startup=req.body;
   const newStartup={
