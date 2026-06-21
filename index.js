@@ -36,6 +36,8 @@ const userCollection=database.collection("user");
 const startupsCollection=database.collection("startups");
 const opportunitiesCollection=database.collection("opportunities");
 const applicationsCollection=database.collection("applications");
+const plansCollection=database.collection("plans");
+const subscriptionCollection=database.collection("subscriptions");
 
 
 
@@ -88,21 +90,7 @@ app.post('/opportunities', async(req, res)=>{
 })
 
 
-   app.get('/opportunities', async (req, res) => {
- 
-      const query = {};
-
-      if (req.query.opportunityId) {
-        query.opportunityId = req.query.opportunityId;
-      }
-      if (req.query.status) {
-        query.status = req.query.status;
-      }
-
-      const cursor = opportunitiesCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result);
-    });
+   
 
 
      app.patch('/opportunities/:id', async (req, res) => {
@@ -144,37 +132,24 @@ const application = req.body;
     })
 
 
-      app.get('/applications', async (req, res) => {
-      const query = {}
-      if (req.query.userId) {
+    app.get('/applications', async (req, res) => {
+    const query = {};
+
+    if (req.query.userId) {
         query.applicantId = req.query.userId;
-      }
+    }
 
-      console.log(req.user, req.query.userId)
-
-      if (req.query.opportunityId) {
-        query.opportunityId = req.query.opportunityId
-      }
-      const cursor = applicationsCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result)
-    })
-
-
-
-      app.get('/applications', async (req, res) => {
-      const query = {}
-      if (req.query.founderId) {
+    if (req.query.founderId) {
         query.founderId = req.query.founderId;
-      }
+    }
 
-      if (req.query.opportunityId) {
-        query.opportunityId = req.query.opportunityId
-      }
-      const cursor = applicationsCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result)
-    })
+    if (req.query.opportunityId) {
+        query.opportunityId = req.query.opportunityId;
+    }
+
+    const result = await applicationsCollection.find(query).toArray();
+    res.send(result);
+});
 
 
       app.get('/opportunities', async (req, res) => {
@@ -192,28 +167,6 @@ const application = req.body;
     })
 
 
-//     app.patch('/applications/:id', async (req, res) => {
-//   const { id } = req.params;
-//   const { status } = req.body;
-
-//   const allowedStatuses = ['applied', 'review', 'shortlisted', 'rejected', 'offered'];
-//   if (!status || !allowedStatuses.includes(status.toLowerCase())) {
-//     return res.status(400).send({ message: 'Invalid status value' });
-//   }
-
-//   const result = await applicationsCollection.updateOne(
-//     { _id: new ObjectId(id) },
-//     { $set: { status } }
-//   );
-
-//   if (result.matchedCount === 0) {
-//     return res.status(404).send({ message: 'Application not found' });
-//   }
-
-//   res.send({ message: 'Status updated successfully', result });
-// });
-
-
     app.patch('/applications/:id', async(req, res)=>{
       const id=req.params.id;
       const updatedApplication=req.body;
@@ -225,6 +178,39 @@ const application = req.body;
       }
       const result=await applicationsCollection.updateOne(filter, updatedDoc)
     res.send(result);
+    })
+
+
+    app.get('/plans', async(req, res)=>{
+
+      const query={};
+
+      if(req.query.plan_id){
+        query.id=req.query.plan_id
+      }
+      const plan=await plansCollection.findOne(query);
+      res.send(plan)
+    })
+
+
+    app.post('/subscriptions', async(req, res)=>{
+      const data=req.body;
+      const subsInfo={
+        ...data,
+        createdAt: new Date()
+      }
+
+      const result=await subscriptionCollection.insertOne(subsInfo);
+    
+      const filter={email: data.email};
+      const updateDocument={
+        $set:{
+          plan: data.planId
+        }
+      };
+
+      const updateResult=await userCollection.updateOne(filter, updateDocument);
+      res.send(updateResult)
     })
 
 
