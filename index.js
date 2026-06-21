@@ -6,6 +6,9 @@ require('dotenv').config();
 app.use(cors());
 app.use(express.json());
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const Stripe = require('stripe');
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
 
 app.get('/', (req, res) => {
   res.send('Welcome to Startup-Forge server!')
@@ -44,6 +47,13 @@ const subscriptionCollection=database.collection("subscriptions");
 
    app.get('/users', async(req, res)=>{
       const result=await userCollection.find().toArray();
+      res.json(result);
+    });
+
+
+
+   app.get('/startups', async(req, res)=>{
+      const result=await startupsCollection.find().toArray();
       res.json(result);
     });
 
@@ -188,6 +198,20 @@ const application = req.body;
     })
 
 
+    app.patch('/users/:id', async(req, res)=>{
+      const id=req.params.id;
+      const updatedUser=req.body;
+      const filter={_id: new ObjectId(id)};
+      const updatedDoc={
+        $set:{
+          status: updatedUser.status
+        }
+      }
+      const result=await userCollection.updateOne(filter, updatedDoc)
+    res.send(result);
+    })
+
+
     app.get('/plans', async(req, res)=>{
 
       const query={};
@@ -219,6 +243,30 @@ const application = req.body;
       const updateResult=await userCollection.updateOne(filter, updateDocument);
       res.send(updateResult)
     })
+
+
+app.get('/revenue/total', async (req, res) => {
+  try {
+    let total = 0, hasMore = true, startingAfter = undefined;
+
+    while (hasMore) {
+      const txns = await stripe.balanceTransactions.list({
+        limit: 100,
+        type: 'charge',
+        ...(startingAfter && { starting_after: startingAfter }),
+      });
+
+      txns.data.forEach(txn => total += txn.amount);
+      hasMore = txns.has_more;
+      if (hasMore) startingAfter = txns.data.at(-1).id;
+    }
+
+    res.json({ totalRevenue: total / 100 });
+  } catch (err) {
+    console.error('Stripe error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch revenue' });
+  }
+});
 
 
 
