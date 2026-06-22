@@ -41,18 +41,51 @@ const opportunitiesCollection=database.collection("opportunities");
 const applicationsCollection=database.collection("applications");
 const plansCollection=database.collection("plans");
 const subscriptionCollection=database.collection("subscriptions");
+const sessionCollection=database.collection("session");
 
 
 
-
-   app.get('/users', async(req, res)=>{
-      const result=await userCollection.find().toArray();
-      res.json(result);
-    });
-
+const logger= (req, res, next)=>{
+  // console.log('loggegrgegreg', req. params);
+  next()
+}
 
 
-   app.get('/startups', async(req, res)=>{
+const verifyToken= async(req ,res, next)=>{
+
+  const authHeader=req.headers?.authorization;
+  if(!authHeader){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+
+  const token= authHeader.split(' ')[1];
+
+    if(!token){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+
+  
+
+  next();
+}
+
+
+
+app.get('/users', verifyToken, async (req, res) => {
+  const { email } = req.query;
+  const query = email ? { email } : {};
+  const result = await userCollection.find(query).toArray();
+  res.json(result);
+});
+
+  //  app.get('/users', async(req, res)=>{
+  //     const result=await userCollection.find().toArray();
+  //     res.json(result);
+  //   });
+
+
+
+   app.get('/startups', verifyToken, async(req, res)=>{
       const result=await startupsCollection.find().toArray();
       res.json(result);
     });
@@ -68,7 +101,7 @@ app.post('/startups', async(req, res)=>{
   res.send(result)
 })
 
-app.get('/my/startups', async(req, res)=>{
+app.get('/my/startups',  async(req, res)=>{
      const query = {};
       if (req.query.founderId) {
         query.founderId = req.query.founderId
@@ -85,15 +118,41 @@ res.json(result);
 })
 
 
- app.patch('/startups/:id', async (req, res) => {
-      const { id } = req.params;
-      const updateData = req.body;
-      const result = await startupsCollection.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: updateData }
-      );
-      res.json(result);
-    });
+app.patch('/startups/:id',  async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  const result = await startupsCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updateData }
+  );
+  res.json(result);
+});
+
+
+//  app.patch('/startups/:id', async (req, res) => {
+//       const { id } = req.params;
+//       const updateData = req.body;
+//       const result = await startupsCollection.updateOne(
+//         { _id: new ObjectId(id) },
+//         { $set: updateData }
+//       );
+//       res.json(result);
+//     });
+
+
+//  app.patch('/startups/:id', async(req, res)=>{
+//       const id=req.params.id;
+//       const updatedStartup=req.body;
+//       const filter={_id: new ObjectId(id)};
+//       const updatedDoc={
+//         $set:{
+//           status: updatedStartup.status
+//         }
+//       }
+//       const result=await startupsCollection.updateOne(filter, updatedDoc)
+//     res.send(result);
+//     })
+
 
 app.post('/opportunities', async(req, res)=>{
   const opportunity=req.body;
@@ -121,7 +180,7 @@ app.post('/opportunities', async(req, res)=>{
     });
 
 
-    app.get('/opportunities/:id', async(req, res)=>{
+    app.get('/opportunities/:id', verifyToken, async(req, res)=>{
           const id = req.params.id;
         const query = {
           _id: new ObjectId(id)
@@ -149,7 +208,7 @@ const application = req.body;
     })
 
 
-    app.get('/applications', async (req, res) => {
+    app.get('/applications', verifyToken, async (req, res) => {
     const query = {};
 
     if (req.query.userId) {
@@ -169,7 +228,7 @@ const application = req.body;
 });
 
 
-      app.get('/opportunities', async (req, res) => {
+      app.get('/opportunities', verifyToken, async (req, res) => {
       const query = {}
       if (req.query.founderId) {
         query.founderId = req.query.founderId;
@@ -243,6 +302,9 @@ const application = req.body;
       const updateResult=await userCollection.updateOne(filter, updateDocument);
       res.send(updateResult)
     })
+
+
+   
 
 
 app.get('/revenue/total', async (req, res) => {
