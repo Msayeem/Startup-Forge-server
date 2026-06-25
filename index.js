@@ -29,10 +29,12 @@ const client = new MongoClient(uri, {
   }
 });
 
-async function run() {
-  try {
+// async function run() {
+//   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    await client.connect(()=>{
+console.log('connecting to mongodb')
+    }).catch(console.dir)
 
 const database=client.db("startup-forge");
 const userCollection=database.collection("user");
@@ -45,10 +47,7 @@ const sessionCollection=database.collection("session");
 
 
 
-const logger= (req, res, next)=>{
-  // console.log('loggegrgegreg', req. params);
-  next()
-}
+
 
 
 const verifyToken= async(req ,res, next)=>{
@@ -85,7 +84,7 @@ app.get('/users', verifyToken, async (req, res) => {
 
 
 
-   app.get('/startups', verifyToken, async(req, res)=>{
+   app.get('/startups',  async(req, res)=>{
       const result=await startupsCollection.find().toArray();
       res.json(result);
     });
@@ -97,11 +96,11 @@ app.post('/startups', async(req, res)=>{
     ...startup,
     createdAt: new Date()
   }
-  const result=await startupsCollection.insertOne(startup);
+  const result=await startupsCollection.insertOne(newStartup);
   res.send(result)
 })
 
-app.get('/my/startups',  async(req, res)=>{
+app.get('/my/startups',verifyToken,  async(req, res)=>{
      const query = {};
       if (req.query.founderId) {
         query.founderId = req.query.founderId
@@ -228,19 +227,51 @@ const application = req.body;
 });
 
 
-      app.get('/opportunities', verifyToken, async (req, res) => {
-      const query = {}
-      if (req.query.founderId) {
-        query.founderId = req.query.founderId;
-      }
+    app.get('/opportunities', async (req, res) => {
+  const query = {};
 
-      if (req.query.opportunityId) {
-        query.opportunityId = req.query.opportunityId
-      }
-      const cursor = opportunitiesCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result)
-    })
+  if (req.query.founderId) {
+    query.founderId = req.query.founderId;
+  }
+
+  if (req.query.search) {
+    const regex = { $regex: req.query.search, $options: 'i' };
+    query.$or = [
+      { roleTitle: regex },   // ← fix: was 'title', should be 'roleTitle'
+      { requirements: regex }
+    ];
+  }
+
+  if (req.query.workType) {
+    const types = Array.isArray(req.query.workType) ? req.query.workType : [req.query.workType];
+    query.workType = { $in: types };
+  }
+
+  if (req.query.industry) {
+    const industries = Array.isArray(req.query.industry) ? req.query.industry : [req.query.industry];
+    query.industry = { $in: industries };
+  }
+
+  if (req.query.opportunityId) {
+    query.opportunityId = req.query.opportunityId;
+  }
+
+  // pagination — only applied when page param is present (so founderId queries still work as before)
+  if (req.query.page) {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const skip = (page - 1) * limit;
+
+    const total = await opportunitiesCollection.countDocuments(query);
+    const result = await opportunitiesCollection.find(query).skip(skip).limit(limit).toArray();
+
+    return res.send({ data: result, total, page, totalPages: Math.ceil(total / limit) });
+  }
+
+  // no page param — return all (used by founder dashboard etc.)
+  const result = await opportunitiesCollection.find(query).toArray();
+  res.send(result);
+});
 
 
     app.patch('/applications/:id', async(req, res)=>{
@@ -343,13 +374,13 @@ app.get('/revenue/total', async (req, res) => {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
-  }
-}
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
+//   } finally {
+//     // Ensures that the client will close when you finish/error
+//     // await client.close();
+//   }
+// }
 run().catch(console.dir);
 
 
@@ -358,3 +389,6 @@ run().catch(console.dir);
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
+
+
+module.exports = app;
