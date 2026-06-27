@@ -165,7 +165,6 @@ app.post('/opportunities', async(req, res)=>{
 })
 
 
-   
 
 
      app.patch('/opportunities/:id', async (req, res) => {
