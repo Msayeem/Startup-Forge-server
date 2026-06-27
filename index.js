@@ -138,7 +138,6 @@ app.patch('/startups/:id',  async (req, res) => {
 //       res.json(result);
 //     });
 
-
 //  app.patch('/startups/:id', async(req, res)=>{
 //       const id=req.params.id;
 //       const updatedStartup=req.body;
